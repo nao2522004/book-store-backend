@@ -3,7 +3,6 @@ package com.cdweb.bookstore.modules.product.model;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.awt.print.Book;
 import java.util.ArrayList;
 import java.util.List;
 

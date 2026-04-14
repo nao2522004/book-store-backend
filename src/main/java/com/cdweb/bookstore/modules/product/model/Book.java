@@ -1,5 +1,6 @@
 package com.cdweb.bookstore.modules.product.model;
 
+import com.cdweb.bookstore.modules.interaction.model.Review;
 import jakarta.persistence.*;
 import lombok.*;
 

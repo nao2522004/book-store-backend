@@ -1,5 +1,8 @@
 package com.cdweb.bookstore.modules.user.model;
 
+import com.cdweb.bookstore.modules.order.model.Address;
+import com.cdweb.bookstore.modules.order.model.Cart;
+import com.cdweb.bookstore.modules.order.model.Order;
 import jakarta.persistence.*;
 import lombok.*;
 
