@@ -81,7 +81,7 @@ public class JwtService {
         ResponseCookie cookie = ResponseCookie.from("refreshToken", tokenValue)
                 .httpOnly(true)
                 .secure(true)           // Đổi thành false khi test local HTTP
-                .path("/auth/refresh")  // Chỉ gửi cookie cho endpoint này
+                .path("/")              // Chỉ gửi cookie cho endpoint này
                 .maxAge(jwtProperties.getRefreshTokenExpiration() / 1000)
                 .sameSite("Lax")
                 .build();
@@ -92,7 +92,7 @@ public class JwtService {
         ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
                 .secure(true)
-                .path("/auth/refresh")
+                .path("/")
                 .maxAge(0)
                 .sameSite("Lax")
                 .build();
