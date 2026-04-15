@@ -5,6 +5,7 @@ import com.cdweb.bookstore.config.JwtService;
 import com.cdweb.bookstore.modules.auth.dto.LoginRequest;
 import com.cdweb.bookstore.modules.auth.dto.LoginResponse;
 import com.cdweb.bookstore.modules.auth.dto.RegisterRequest;
+import com.cdweb.bookstore.modules.auth.dto.RegisterResponse;
 import com.cdweb.bookstore.modules.user.model.RefreshToken;
 import com.cdweb.bookstore.modules.user.model.Role;
 import com.cdweb.bookstore.modules.user.model.User;
@@ -12,8 +13,6 @@ import com.cdweb.bookstore.modules.user.repository.RefreshTokenRepository;
 import com.cdweb.bookstore.modules.user.repository.UserRepository;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -21,18 +20,11 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
-import org.springframework.security.oauth2.jwt.JwsHeader;
-import org.springframework.security.oauth2.jwt.JwtClaimsSet;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -107,13 +99,13 @@ public class AuthService {
     // ─── Register ─────────────────────────────────────────────────────────────
 
     @Transactional
-    public User register(RegisterRequest request) {
+    public RegisterResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
             throw new RuntimeException("Email đã được sử dụng");
         }
-        User user = User.builder().name(request.name()).email(request.email()).password(passwordEncoder.encode(request.password())).provider(User.Provider.LOCAL).roles(Set.of(Role.builder().id(1L).name("ROLE_USER").build())) // default role
+        User user = User.builder().name(request.name()).email(request.email()).password(passwordEncoder.encode(request.password())).provider(User.Provider.LOCAL).roles(Set.of(Role.builder().id(1L).name("USER").build())) // default role
                 .build();
         userRepository.save(user);
-        return user;
+        return RegisterResponse.fromUser(user);
     }
 }
