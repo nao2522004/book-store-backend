@@ -1,4 +1,4 @@
-package com.cdweb.bookstore.common.helper;
+package com.cdweb.bookstore.common;
 
 import java.util.List;
 

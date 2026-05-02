@@ -9,33 +9,33 @@
  * Copyright (c) 2025 Hỏi Dân IT. All Rights Reserved.
  */
 
-package com.cdweb.bookstore.common.helper.exception;
+package com.cdweb.bookstore.common.exception;
 
 import java.io.IOException;
 
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 @Component
-public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
+public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 
 	@Override
-	public void commence(HttpServletRequest request, HttpServletResponse response,
-			AuthenticationException authException) throws IOException {
+	public void handle(HttpServletRequest request, HttpServletResponse response,
+			AccessDeniedException accessDeniedException) throws IOException {
 
-		response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+		response.setStatus(HttpServletResponse.SC_FORBIDDEN);
 		response.setContentType("application/json;charset=UTF-8");
 
 		String body = """
 				{
-				  "status": 401,
-				  "errorCode": "UNAUTHORIZED",
+				  "status": 403,
+				  "error": "FORBIDDEN",
 				  "data": null,
-				  "message": "Bạn cần đăng nhập hoặc token không hợp lệ",
+				  "message": "Bạn không có quyền truy cập tài nguyên này",
 				}
 				""";
 

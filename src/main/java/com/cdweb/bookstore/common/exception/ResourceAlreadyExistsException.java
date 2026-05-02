@@ -1,4 +1,4 @@
-package com.cdweb.bookstore.common.helper.exception;
+package com.cdweb.bookstore.common.exception;
 
 public class ResourceAlreadyExistsException extends RuntimeException {
 
