@@ -1,11 +1,10 @@
 package com.cdweb.bookstore.modules.auth;
 
-import com.cdweb.bookstore.common.helper.ApiResponse;
+import com.cdweb.bookstore.common.ApiResponse;
 import com.cdweb.bookstore.modules.auth.dto.LoginRequest;
 import com.cdweb.bookstore.modules.auth.dto.LoginResponse;
 import com.cdweb.bookstore.modules.auth.dto.RegisterRequest;
 import com.cdweb.bookstore.modules.auth.dto.RegisterResponse;
-import com.cdweb.bookstore.modules.user.model.User;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

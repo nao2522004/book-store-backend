@@ -1,10 +1,10 @@
-package com.cdweb.bookstore.common.helper;
+package com.cdweb.bookstore.common;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.cdweb.bookstore.common.helper.exception.ResourceAlreadyExistsException;
-import com.cdweb.bookstore.common.helper.exception.ResourceNotFoundException;
+import com.cdweb.bookstore.common.exception.ResourceAlreadyExistsException;
+import com.cdweb.bookstore.common.exception.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
