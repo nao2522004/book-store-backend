@@ -12,6 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BookDTO {
+    // ── Request & Response ───────────────────────────────────────────────────
     private Long id;
     private String title;
     private String slug;
@@ -26,5 +27,7 @@ public class BookDTO {
     private Long publisherId;
     private Instant publishedDate;
     private Book.Status status;
-    private List<Long> authorIds; // Danh sách ID của các tác giả
+    private Boolean isDeleted;
+    // ── Request only ─────────────────────────────────────────────────────────
+    private List<Long> authorIds;
 }

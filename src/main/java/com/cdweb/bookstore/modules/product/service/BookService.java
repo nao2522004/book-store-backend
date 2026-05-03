@@ -1,10 +1,11 @@
 package com.cdweb.bookstore.modules.product.service;
 
+import com.cdweb.bookstore.common.exception.ResourceNotFoundException;
 import com.cdweb.bookstore.modules.product.repository.AuthorRepository;
 import com.cdweb.bookstore.modules.product.dto.BookDTO;
-import com.cdweb.bookstore.modules.category.repository.CategoryRepository;
 import com.cdweb.bookstore.modules.product.model.*;
 import com.cdweb.bookstore.modules.product.repository.BookRepository;
+import com.cdweb.bookstore.modules.product.repository.CategoryRepository;
 import com.cdweb.bookstore.modules.product.repository.PublisherRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,8 +23,7 @@ public class BookService {
     private final AuthorRepository authorRepository;
 
     @Transactional
-    public Book createBook(BookDTO dto) {
-        // 1. Kiểm tra trùng lặp
+    public BookDTO createBook(BookDTO dto) {
         if (bookRepository.existsByIsbn(dto.getIsbn())) {
             throw new RuntimeException("Mã ISBN đã tồn tại: " + dto.getIsbn());
         }
@@ -31,21 +31,17 @@ public class BookService {
             throw new RuntimeException("Slug đã tồn tại: " + dto.getSlug());
         }
 
-        // 2. Kiểm tra Category
         Category category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục với ID: " + dto.getCategoryId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục với ID: " + dto.getCategoryId()));
 
-        // 3. Kiểm tra Publisher
         Publisher publisher = publisherRepository.findById(dto.getPublisherId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhà xuất bản với ID: " + dto.getPublisherId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhà xuất bản với ID: " + dto.getPublisherId()));
 
-        // 4. Kiểm tra danh sách Authors
         List<Author> authors = authorRepository.findAllById(dto.getAuthorIds());
         if (authors.size() != dto.getAuthorIds().size()) {
             throw new RuntimeException("Một hoặc nhiều tác giả không hợp lệ.");
         }
 
-        // 5. Map DTO to Entity và lưu
         Book book = Book.builder()
                 .title(dto.getTitle())
                 .slug(dto.getSlug())
@@ -63,111 +59,102 @@ public class BookService {
                 .authors(authors)
                 .build();
 
-        return bookRepository.save(book);
+        return toDTO(bookRepository.save(book));
     }
 
-    public List<Book> getAllBooks() {
-        return bookRepository.findAll();
+    public List<BookDTO> getAllBooks() {
+        return bookRepository.findAll()
+                .stream()
+                .map(this::toDTO)
+                .toList();
     }
 
-    public Book getBookById(Long id) {
-        return bookRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy sách với ID: " + id));
+    public BookDTO getBookById(Long id) {
+        Book book = bookRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sách với ID: " + id));
+        return toDTO(book);
     }
 
     @Transactional
-    public Book updateBook(Long id, BookDTO dto) {
-        Book existingBook = getBookById(id);
-        mapDtoToObject(dto,existingBook);
-        return bookRepository.save(existingBook);
+    public BookDTO updateBook(Long id, BookDTO dto) {
+        Book book = bookRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sách với ID: " + id));
+        setDtoToEntity(dto, book);
+        return toDTO(bookRepository.save(book));
     }
 
     @Transactional
     public void deleteBook(Long id) {
         if (!bookRepository.existsById(id)) {
-            throw new RuntimeException("Không thể xóa. Không tìm thấy sách với ID: " + id);
+            throw new ResourceNotFoundException("Không thể xóa. Không tìm thấy sách với ID: " + id);
         }
-        bookRepository.deleteById(id);
+        Book book = bookRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sách với ID: " + id));
+        book.setIsDeleted(true);
+        bookRepository.save(book);
     }
-    private void mapDtoToObject(BookDTO dto, Book existingBook) {
+    private void setDtoToEntity(BookDTO dto, Book book) {
+        if (dto.getTitle() != null)         book.setTitle(dto.getTitle());
+        if (dto.getDescription() != null)   book.setDescription(dto.getDescription());
+        if (dto.getPrice() != null)         book.setPrice(dto.getPrice());
+        if (dto.getDiscountPrice() != null) book.setDiscountPrice(dto.getDiscountPrice());
+        if (dto.getStockQuantity() != null) book.setStockQuantity(dto.getStockQuantity());
+        if (dto.getPages() != null)         book.setPages(dto.getPages());
+        if (dto.getLanguage() != null)      book.setLanguage(dto.getLanguage());
+        if (dto.getPublishedDate() != null) book.setPublishedDate(dto.getPublishedDate());
+        if (dto.getStatus() != null)        book.setStatus(dto.getStatus());
 
-        // 1. Cập nhật các trường cơ bản
-        if (dto.getTitle() != null) {
-            existingBook.setTitle(dto.getTitle());
-        }
-
-        // Tôi đã đưa description về dạng if chuẩn cho đồng bộ và an toàn với các trường khác
-        if (dto.getDescription() != null) {
-            existingBook.setDescription(dto.getDescription());
-        }
-
-        if (dto.getPrice() != null) {
-            existingBook.setPrice(dto.getPrice());
-        }
-
-        if (dto.getDiscountPrice() != null) {
-            existingBook.setDiscountPrice(dto.getDiscountPrice());
-        }
-
-        if (dto.getStockQuantity() != null) {
-            existingBook.setStockQuantity(dto.getStockQuantity());
-        }
-
-        if (dto.getPages() != null) {
-            existingBook.setPages(dto.getPages());
-        }
-
-        if (dto.getLanguage() != null) {
-            existingBook.setLanguage(dto.getLanguage());
-        }
-
-        if (dto.getPublishedDate() != null) {
-            existingBook.setPublishedDate(dto.getPublishedDate());
-        }
-
-        if (dto.getStatus() != null) {
-            existingBook.setStatus(dto.getStatus());
-        }
-
-        // 2. Cập nhật các trường Unique (Cần kiểm tra trùng lặp)
-        if (dto.getIsbn() != null && !dto.getIsbn().equals(existingBook.getIsbn())) {
+        if (dto.getIsbn() != null && !dto.getIsbn().equals(book.getIsbn())) {
             if (bookRepository.existsByIsbn(dto.getIsbn())) {
                 throw new RuntimeException("Mã ISBN mới đã tồn tại ở một cuốn sách khác.");
             }
-            existingBook.setIsbn(dto.getIsbn());
+            book.setIsbn(dto.getIsbn());
         }
 
-        if (dto.getSlug() != null && !dto.getSlug().equals(existingBook.getSlug())) {
+        if (dto.getSlug() != null && !dto.getSlug().equals(book.getSlug())) {
             if (bookRepository.existsBySlug(dto.getSlug())) {
                 throw new RuntimeException("Slug mới đã tồn tại ở một cuốn sách khác.");
             }
-            existingBook.setSlug(dto.getSlug());
+            book.setSlug(dto.getSlug());
         }
 
-        // 3. Cập nhật các mối quan hệ (Relationships)
-        // - Category
         if (dto.getCategoryId() != null &&
-                (existingBook.getCategory() == null || !existingBook.getCategory().getId().equals(dto.getCategoryId()))) {
-            Category newCategory = categoryRepository.findById(dto.getCategoryId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục với ID: " + dto.getCategoryId()));
-            existingBook.setCategory(newCategory);
+                (book.getCategory() == null || !book.getCategory().getId().equals(dto.getCategoryId()))) {
+            Category category = categoryRepository.findById(dto.getCategoryId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục với ID: " + dto.getCategoryId()));
+            book.setCategory(category);
         }
 
-        // - Publisher
         if (dto.getPublisherId() != null &&
-                (existingBook.getPublisher() == null || !existingBook.getPublisher().getId().equals(dto.getPublisherId()))) {
-            Publisher newPublisher = publisherRepository.findById(dto.getPublisherId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy nhà xuất bản với ID: " + dto.getPublisherId()));
-            existingBook.setPublisher(newPublisher);
+                (book.getPublisher() == null || !book.getPublisher().getId().equals(dto.getPublisherId()))) {
+            Publisher publisher = publisherRepository.findById(dto.getPublisherId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhà xuất bản với ID: " + dto.getPublisherId()));
+            book.setPublisher(publisher);
         }
 
-        // - Authors
         if (dto.getAuthorIds() != null && !dto.getAuthorIds().isEmpty()) {
-            List<Author> newAuthors = authorRepository.findAllById(dto.getAuthorIds());
-            if (newAuthors.size() != dto.getAuthorIds().size()) {
+            List<Author> authors = authorRepository.findAllById(dto.getAuthorIds());
+            if (authors.size() != dto.getAuthorIds().size()) {
                 throw new RuntimeException("Một hoặc nhiều tác giả không hợp lệ.");
             }
-            existingBook.setAuthors(newAuthors);
+            book.setAuthors(authors);
         }
+    }
+    private BookDTO toDTO(Book book) {
+        return BookDTO.builder()
+                .id(book.getId())
+                .title(book.getTitle())
+                .slug(book.getSlug())
+                .description(book.getDescription())
+                .isbn(book.getIsbn())
+                .price(book.getPrice())
+                .discountPrice(book.getDiscountPrice())
+                .stockQuantity(book.getStockQuantity())
+                .pages(book.getPages())
+                .language(book.getLanguage())
+                .categoryId(book.getCategory() != null ? book.getCategory().getId() : null)
+                .publisherId(book.getPublisher() != null ? book.getPublisher().getId() : null)
+                .publishedDate(book.getPublishedDate())
+                .status(book.getStatus())
+                .build();
     }
 }

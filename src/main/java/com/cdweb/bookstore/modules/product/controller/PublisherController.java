@@ -1,5 +1,6 @@
 package com.cdweb.bookstore.modules.product.controller;
 
+import com.cdweb.bookstore.common.ApiResponse;
 import com.cdweb.bookstore.modules.product.dto.PublisherDTO;
 import com.cdweb.bookstore.modules.product.model.Publisher;
 import com.cdweb.bookstore.modules.product.service.PublisherService;
@@ -17,28 +18,30 @@ public class PublisherController {
     private final PublisherService publisherService;
 
     @GetMapping
-    public ResponseEntity<List<Publisher>> getAll() {
-        return ResponseEntity.ok(publisherService.getAllPublishers());
+    public ResponseEntity<ApiResponse<List<PublisherDTO>>> getAll() {
+        return ApiResponse.ok(publisherService.getAllPublishers());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Publisher> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(publisherService.getPublisherById(id));
+    public ResponseEntity<ApiResponse<PublisherDTO>> getById(@PathVariable Long id) {
+        return ApiResponse.ok(publisherService.getPublisherById(id));
     }
 
     @PostMapping
-    public ResponseEntity<Publisher> create(@RequestBody PublisherDTO dto) {
-        return ResponseEntity.ok(publisherService.createPublisher(dto));
+    public ResponseEntity<ApiResponse<PublisherDTO>> create(@RequestBody PublisherDTO dto) {
+        return ApiResponse.created(publisherService.createPublisher(dto), "Tạo nhà xuất bản thành công");
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Publisher> update(@PathVariable Long id, @RequestBody PublisherDTO dto) {
-        return ResponseEntity.ok(publisherService.updatePublisher(id, dto));
+    public ResponseEntity<ApiResponse<PublisherDTO>> update(
+            @PathVariable Long id,
+            @RequestBody PublisherDTO dto) {
+        return ApiResponse.ok(publisherService.updatePublisher(id, dto), "Cập nhật nhà xuất bản thành công");
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         publisherService.deletePublisher(id);
-        return ResponseEntity.noContent().build();
+        return ApiResponse.ok(null, "Xóa nhà xuất bản thành công");
     }
 }
