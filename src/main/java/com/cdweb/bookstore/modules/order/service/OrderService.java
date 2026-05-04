@@ -17,7 +17,6 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class OrderService {
 
-    // Dùng Set để O(1) lookup, dễ mở rộng sau này.
     private static final Set<Order.OrderStatus> CANCELLABLE_STATUSES = Set.of(
             Order.OrderStatus.PENDING,
             Order.OrderStatus.CONFIRMED
@@ -25,6 +24,8 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final BookRepository  bookRepository;
+
+    // ─── User: xem đơn hàng của mình ─────────────────────────────────────────
 
     @Transactional(readOnly = true)
     public List<OrderResponse> getOrdersByUser(Long userId) {
@@ -36,19 +37,16 @@ public class OrderService {
 
     @Transactional(readOnly = true)
     public OrderResponse getOrderDetail(Long orderId, Long userId) {
-        Order order = orderRepository.findByIdWithItems(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Đơn hàng #" + orderId + " không tồn tại"));
-        // Security: user chỉ được xem đơn hàng của chính mình
+        Order order = loadWithItems(orderId);
         assertOrderBelongsToUser(order, userId);
-
         return OrderResponse.fromOrder(order);
     }
 
+    // ─── User: tự hủy đơn ────────────────────────────────────────────────────
+
     @Transactional
     public OrderResponse cancelOrder(Long orderId, Long userId) {
-        Order order = orderRepository.findByIdWithItems(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Đơn hàng #" + orderId + " không tồn tại"));
-
+        Order order = loadWithItems(orderId);
         assertOrderBelongsToUser(order, userId);
 
         if (!CANCELLABLE_STATUSES.contains(order.getStatus())) {
@@ -58,41 +56,71 @@ public class OrderService {
         }
 
         order.setStatus(Order.OrderStatus.CANCELLED);
-
-        for (OrderItem item : order.getItems()) {
-            bookRepository.increaseStock(item.getBook().getId(), item.getQuantity());
-        }
+        restoreStock(order.getItems());
 
         return OrderResponse.fromOrder(orderRepository.save(order));
     }
 
+    // ─── Admin: cập nhật trạng thái đơn hàng ─────────────────────────────────
+
     /**
-     * Luồng hợp lệ:
+     * State machine:
      * PENDING → CONFIRMED → PROCESSING → SHIPPED → DELIVERED
      *                                            ↘ CANCELLED / RETURNED
      */
     @Transactional
     public OrderResponse updateStatus(Long orderId, Order.OrderStatus newStatus) {
-        Order order = orderRepository.findByIdWithItems(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Đơn hàng #" + orderId + " không tồn tại"));
-
+        Order order = loadWithItems(orderId);
         validateStatusTransition(order.getStatus(), newStatus);
+
         order.setStatus(newStatus);
 
-        // Nếu admin hủy đơn đang xử lý → hoàn lại tồn kho
-        if (newStatus == Order.OrderStatus.CANCELLED || newStatus == Order.OrderStatus.RETURNED) {
-            for (OrderItem item : order.getItems()) {
-                bookRepository.increaseStock(item.getBook().getId(), item.getQuantity());
-            }
+        // Hoàn tồn kho nếu đơn bị hủy hoặc trả hàng
+        if (newStatus == Order.OrderStatus.CANCELLED ||
+            newStatus == Order.OrderStatus.RETURNED) {
+            restoreStock(order.getItems());
         }
 
         return OrderResponse.fromOrder(orderRepository.save(order));
     }
 
+    // ─── Admin: cập nhật trạng thái thanh toán ────────────────────────────────
+
+    /**
+     * Luồng hợp lệ:
+     *   UNPAID → PAID      (xác nhận đã nhận tiền)
+     *   PAID   → REFUNDED  (hoàn tiền khi hủy/trả hàng)
+     * UNPAID → REFUNDED không hợp lệ (chưa thu tiền thì không có gì để hoàn).
+     */
+    @Transactional
+    public OrderResponse updatePaymentStatus(Long orderId, Order.PaymentStatus newPaymentStatus) {
+        Order order = loadWithItems(orderId);
+
+        validatePaymentTransition(order.getPaymentStatus(), newPaymentStatus);
+        order.setPaymentStatus(newPaymentStatus);
+
+        return OrderResponse.fromOrder(orderRepository.save(order));
+    }
+
+    // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    private Order loadWithItems(Long orderId) {
+        return orderRepository.findByIdWithItems(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Đơn hàng #" + orderId + " không tồn tại"));
+    }
+
     private void assertOrderBelongsToUser(Order order, Long userId) {
+        // Trả 404 thay vì 403 để không lộ thông tin đơn hàng tồn tại
         if (!order.getUser().getId().equals(userId)) {
-            // Trả về 404 thay vì 403 để tránh lộ thông tin đơn hàng tồn tại
-            throw new ResourceNotFoundException("Đơn hàng #" + order.getId() + " không tồn tại");
+            throw new ResourceNotFoundException(
+                    "Đơn hàng #" + order.getId() + " không tồn tại");
+        }
+    }
+
+    private void restoreStock(List<OrderItem> items) {
+        for (OrderItem item : items) {
+            bookRepository.increaseStock(item.getBook().getId(), item.getQuantity());
         }
     }
 
@@ -102,12 +130,25 @@ public class OrderService {
             case CONFIRMED  -> next == Order.OrderStatus.PROCESSING || next == Order.OrderStatus.CANCELLED;
             case PROCESSING -> next == Order.OrderStatus.SHIPPED    || next == Order.OrderStatus.CANCELLED;
             case SHIPPED    -> next == Order.OrderStatus.DELIVERED  || next == Order.OrderStatus.RETURNED;
-            default         -> false; // DELIVERED, CANCELLED, RETURNED không được chuyển tiếp
+            default         -> false; // DELIVERED, CANCELLED, RETURNED: trạng thái cuối
         };
 
         if (!valid) {
             throw new RuntimeException(
                     "Chuyển trạng thái không hợp lệ: " + current + " → " + next);
+        }
+    }
+
+    private void validatePaymentTransition(Order.PaymentStatus current, Order.PaymentStatus next) {
+        boolean valid = switch (current) {
+            case UNPAID   -> next == Order.PaymentStatus.PAID;
+            case PAID     -> next == Order.PaymentStatus.REFUNDED;
+            case REFUNDED -> false; // trạng thái cuối
+        };
+
+        if (!valid) {
+            throw new RuntimeException(
+                    "Chuyển trạng thái thanh toán không hợp lệ: " + current + " → " + next);
         }
     }
 }
