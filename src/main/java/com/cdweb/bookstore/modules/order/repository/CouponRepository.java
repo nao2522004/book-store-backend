@@ -17,8 +17,6 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
 
     /**
      * Tìm coupon theo code với PESSIMISTIC_WRITE lock (SELECT ... FOR UPDATE).
-     * Dùng trong checkout để ngăn 2 request đồng thời cùng sử dụng 1 coupon
-     * vượt quá usageLimit (race condition).
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT c FROM Coupon c WHERE c.code = :code")

@@ -65,9 +65,23 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/auth/register", "/auth/login").permitAll()
+
+                        // ── PUBLIC (không cần đăng nhập) ─────────────────────────────
+                        .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        // Chỉ GET books/categories là public; write do admin controller đảm nhận
                         .requestMatchers(HttpMethod.GET, "/books/**", "/categories/**").permitAll()
+
+                        // ── ADMIN (/admin/**) ─────────────────────────────────────────
+                        // Tất cả endpoint dưới /admin/ đều yêu cầu ROLE_ADMIN.
+                        // @PreAuthorize tại controller là lớp bảo vệ thứ 2 (defense in depth).
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+
+                        // ── USER (đã đăng nhập) ───────────────────────────────────────
+                        .requestMatchers("/cart/**").authenticated()
+                        .requestMatchers("/orders/**").authenticated()
+                        .requestMatchers("/coupons/preview").authenticated()
+
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
