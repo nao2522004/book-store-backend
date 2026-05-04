@@ -60,7 +60,8 @@ public class Book {
 
     @Enumerated(EnumType.STRING)
     private Status status;   // ACTIVE, INACTIVE, OUT_OF_STOCK
-
+    @Column(name = "is_deleted")
+    private Boolean isDeleted;
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;
 
