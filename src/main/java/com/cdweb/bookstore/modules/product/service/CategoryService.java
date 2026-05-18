@@ -5,6 +5,10 @@ import com.cdweb.bookstore.modules.product.dto.CategoryDTO;
 import com.cdweb.bookstore.modules.product.repository.CategoryRepository;
 import com.cdweb.bookstore.modules.product.model.Category;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,7 +44,14 @@ public class CategoryService {
         return toDTO(categoryRepository.save(category));
     }
 
+    public Page<CategoryDTO> getAllCategories(String keyword, int page, int size, String sortBy, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
 
+        Pageable pageable = PageRequest.of(page - 1, size, sort);
+        return categoryRepository.searchCategories(keyword, pageable).map(this::toDTO);
+    }
 
     public List<CategoryDTO> getAllCategories() {
         return categoryRepository.findAll()
