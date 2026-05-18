@@ -5,6 +5,10 @@ import com.cdweb.bookstore.modules.product.dto.PublisherDTO;
 import com.cdweb.bookstore.modules.product.model.Publisher;
 import com.cdweb.bookstore.modules.product.repository.PublisherRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +20,14 @@ public class PublisherService {
 
     private final PublisherRepository publisherRepository;
 
+    public Page<PublisherDTO> getAllPublishers(String keyword, int page, int size, String sortBy, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(page - 1, size, sort);
+        return publisherRepository.searchPublishers(keyword, pageable).map(this::toDTO);
+    }
     public List<PublisherDTO> getAllPublishers() {
         return publisherRepository.findAll()
                 .stream()

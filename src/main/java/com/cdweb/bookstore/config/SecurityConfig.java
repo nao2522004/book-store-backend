@@ -70,7 +70,8 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         // Chỉ GET books/categories là public; write do admin controller đảm nhận
-                        .requestMatchers(HttpMethod.GET, "/books/**", "/categories/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/books/**", "/categories/**","/authors/**","/publishers/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/books/**", "/categories/**","/authors/**","/publishers/**").permitAll()
 
                         // ── ADMIN (/admin/**) ─────────────────────────────────────────
                         // Tất cả endpoint dưới /admin/ đều yêu cầu ROLE_ADMIN.

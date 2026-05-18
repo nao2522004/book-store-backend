@@ -5,6 +5,7 @@ import com.cdweb.bookstore.modules.product.dto.PublisherDTO;
 import com.cdweb.bookstore.modules.product.model.Publisher;
 import com.cdweb.bookstore.modules.product.service.PublisherService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,7 +19,18 @@ public class PublisherController {
     private final PublisherService publisherService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<PublisherDTO>>> getAll() {
+    public ResponseEntity<ApiResponse<Page<PublisherDTO>>> getAll(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir
+    ) {
+        return ApiResponse.ok(publisherService.getAllPublishers(keyword, page, size, sortBy, sortDir));
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse<List<PublisherDTO>>> getAllWithoutPagination() {
         return ApiResponse.ok(publisherService.getAllPublishers());
     }
 
