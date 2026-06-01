@@ -21,51 +21,40 @@ public class PublisherService {
     private final PublisherRepository publisherRepository;
 
     public Page<PublisherDTO> getAllPublishers(String keyword, int page, int size, String sortBy, String sortDir) {
-        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
-                ? Sort.by(sortBy).ascending()
-                : Sort.by(sortBy).descending();
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
 
-        Pageable pageable = PageRequest.of(page - 1, size, sort);
+        int pageIndex = Math.max(0, page - 1);
+        Pageable pageable = PageRequest.of(pageIndex, size, sort);
         return publisherRepository.searchPublishers(keyword, pageable).map(this::toDTO);
     }
+
     public List<PublisherDTO> getAllPublishers() {
-        return publisherRepository.findAll()
-                .stream()
-                .map(this::toDTO)
-                .toList();
+        return publisherRepository.findAll().stream().map(this::toDTO).toList();
     }
 
     public PublisherDTO getPublisherById(Long id) {
-        Publisher publisher = publisherRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhà xuất bản với ID: " + id));
+        Publisher publisher = publisherRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhà xuất bản với ID: " + id));
         return toDTO(publisher);
     }
 
     @Transactional
     public PublisherDTO createPublisher(PublisherDTO dto) {
-        Publisher publisher = Publisher.builder()
-                .name(dto.getName())
-                .description(dto.getDescription())
-                .website(dto.getWebsite())
-                .build();
+        Publisher publisher = Publisher.builder().name(dto.getName()).description(dto.getDescription()).website(dto.getWebsite()).build();
         return toDTO(publisherRepository.save(publisher));
     }
 
     @Transactional
     public PublisherDTO updatePublisher(Long id, PublisherDTO dto) {
-        Publisher publisher = publisherRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhà xuất bản với ID: " + id));
+        Publisher publisher = publisherRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhà xuất bản với ID: " + id));
         setDtoToEntity(dto, publisher);
         return toDTO(publisherRepository.save(publisher));
     }
 
     @Transactional
     public void deletePublisher(Long id) {
-        Publisher publisher = publisherRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhà xuất bản với ID: " + id));
+        Publisher publisher = publisherRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhà xuất bản với ID: " + id));
         if (!publisher.getBooks().isEmpty()) {
-            throw new RuntimeException(
-                    "Không thể xóa NXB này vì đang liên kết với " + publisher.getBooks().size() + " cuốn sách.");
+            throw new RuntimeException("Không thể xóa NXB này vì đang liên kết với " + publisher.getBooks().size() + " cuốn sách.");
         }
         publisherRepository.delete(publisher);
     }
@@ -74,17 +63,12 @@ public class PublisherService {
      * Hàm helper: Chỉ map những trường khác null từ DTO sang Object
      */
     private PublisherDTO toDTO(Publisher publisher) {
-        return PublisherDTO.builder()
-                .id(publisher.getId())
-                .name(publisher.getName())
-                .description(publisher.getDescription())
-                .website(publisher.getWebsite())
-                .build();
+        return PublisherDTO.builder().id(publisher.getId()).name(publisher.getName()).description(publisher.getDescription()).website(publisher.getWebsite()).build();
     }
 
     private void setDtoToEntity(PublisherDTO dto, Publisher publisher) {
-        if (dto.getName() != null)        publisher.setName(dto.getName());
+        if (dto.getName() != null) publisher.setName(dto.getName());
         if (dto.getDescription() != null) publisher.setDescription(dto.getDescription());
-        if (dto.getWebsite() != null)     publisher.setWebsite(dto.getWebsite());
+        if (dto.getWebsite() != null) publisher.setWebsite(dto.getWebsite());
     }
 }
