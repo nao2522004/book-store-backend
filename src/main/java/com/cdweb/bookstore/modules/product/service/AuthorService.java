@@ -26,7 +26,8 @@ public class AuthorService {
                 ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
 
-        Pageable pageable = PageRequest.of(page - 1, size, sort);
+        int pageIndex = Math.max(0, page - 1);
+        Pageable pageable = PageRequest.of(pageIndex, size, sort);
         return authorRepository.searchAuthors(keyword, pageable).map(this::toDTO);
     }
 

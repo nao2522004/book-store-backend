@@ -26,5 +26,5 @@ public record AddressRequest(
         String province,
 
         // true = đặt làm địa chỉ mặc định
-        boolean isDefault
+        Boolean isDefault
 ) {}
