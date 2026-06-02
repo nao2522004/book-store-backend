@@ -1,6 +1,7 @@
 package com.cdweb.bookstore.modules.product.controller;
 
 import com.cdweb.bookstore.common.ApiResponse;
+import com.cdweb.bookstore.common.PageResponse;
 import com.cdweb.bookstore.modules.product.service.AuthorService;
 import com.cdweb.bookstore.modules.product.dto.AuthorDTO;
 import com.cdweb.bookstore.modules.product.model.Author;
@@ -19,14 +20,14 @@ public class AuthorController {
     private final AuthorService authorService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<AuthorDTO>>> getAll(
+    public ResponseEntity<ApiResponse<PageResponse<AuthorDTO>>> getAll(
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDir
-    ) {
-        return ApiResponse.ok(authorService.getAllAuthors(keyword, page, size, sortBy, sortDir));
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        Page<AuthorDTO> authorPage = authorService.getAllAuthors(keyword, page, size, sortBy, sortDir);
+        return ApiResponse.ok(PageResponse.from(authorPage));
     }
 
     @GetMapping("/all")
@@ -38,10 +39,12 @@ public class AuthorController {
     public ResponseEntity<ApiResponse<AuthorDTO>> getAuthorById(@PathVariable Long id) {
         return ApiResponse.ok(authorService.getAuthorById(id));
     }
+
     @PostMapping
     public ResponseEntity<ApiResponse<AuthorDTO>> createAuthor(@RequestBody AuthorDTO authorDTO) {
         return ApiResponse.created(authorService.createAuthor(authorDTO), "Tạo tác giả thành công");
     }
+
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<AuthorDTO>> updateAuthor(
             @PathVariable Long id,

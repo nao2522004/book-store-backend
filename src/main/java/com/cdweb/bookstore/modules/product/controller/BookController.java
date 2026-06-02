@@ -1,6 +1,7 @@
 package com.cdweb.bookstore.modules.product.controller;
 
 import com.cdweb.bookstore.common.ApiResponse;
+import com.cdweb.bookstore.common.PageResponse;
 import com.cdweb.bookstore.modules.product.dto.BookDTO;
 import com.cdweb.bookstore.modules.product.service.BookService;
 import lombok.RequiredArgsConstructor;
@@ -22,14 +23,14 @@ public class BookController {
     private final BookService bookService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<BookDTO>>> getAll(
+    public ResponseEntity<ApiResponse<PageResponse<BookDTO>>> getAll(
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDir
-    ) {
-        return ApiResponse.ok(bookService.getAllBooks(keyword, page, size, sortBy, sortDir));
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        Page<BookDTO> bookPage = bookService.getAllBooks(keyword, page, size, sortBy, sortDir);
+        return ApiResponse.ok(PageResponse.from(bookPage));
     }
 
     @GetMapping("/all")
@@ -46,6 +47,7 @@ public class BookController {
     public ResponseEntity<ApiResponse<BookDTO>> getBookById(@PathVariable Long id) {
         return ApiResponse.ok(bookService.getBookById(id));
     }
+
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<BookDTO>> updateBook(
             @PathVariable Long id,

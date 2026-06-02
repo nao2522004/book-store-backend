@@ -36,10 +36,12 @@ public class BookService {
         }
 
         Category category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục với ID: " + dto.getCategoryId()));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Không tìm thấy danh mục với ID: " + dto.getCategoryId()));
 
         Publisher publisher = publisherRepository.findById(dto.getPublisherId())
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhà xuất bản với ID: " + dto.getPublisherId()));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Không tìm thấy nhà xuất bản với ID: " + dto.getPublisherId()));
 
         List<Author> authors = authorRepository.findAllById(dto.getAuthorIds());
         if (authors.size() != dto.getAuthorIds().size()) {
@@ -101,20 +103,31 @@ public class BookService {
         if (!bookRepository.existsById(id)) {
             throw new ResourceNotFoundException("Không thể xóa. Không tìm thấy sách với ID: " + id);
         }
-        Book book = bookRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sách với ID: " + id));
+        Book book = bookRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sách với ID: " + id));
         book.setIsDeleted(true);
         bookRepository.save(book);
     }
+
     private void setDtoToEntity(BookDTO dto, Book book) {
-        if (dto.getTitle() != null)         book.setTitle(dto.getTitle());
-        if (dto.getDescription() != null)   book.setDescription(dto.getDescription());
-        if (dto.getPrice() != null)         book.setPrice(dto.getPrice());
-        if (dto.getDiscountPrice() != null) book.setDiscountPrice(dto.getDiscountPrice());
-        if (dto.getStockQuantity() != null) book.setStockQuantity(dto.getStockQuantity());
-        if (dto.getPages() != null)         book.setPages(dto.getPages());
-        if (dto.getLanguage() != null)      book.setLanguage(dto.getLanguage());
-        if (dto.getPublishedDate() != null) book.setPublishedDate(dto.getPublishedDate());
-        if (dto.getStatus() != null)        book.setStatus(dto.getStatus());
+        if (dto.getTitle() != null)
+            book.setTitle(dto.getTitle());
+        if (dto.getDescription() != null)
+            book.setDescription(dto.getDescription());
+        if (dto.getPrice() != null)
+            book.setPrice(dto.getPrice());
+        if (dto.getDiscountPrice() != null)
+            book.setDiscountPrice(dto.getDiscountPrice());
+        if (dto.getStockQuantity() != null)
+            book.setStockQuantity(dto.getStockQuantity());
+        if (dto.getPages() != null)
+            book.setPages(dto.getPages());
+        if (dto.getLanguage() != null)
+            book.setLanguage(dto.getLanguage());
+        if (dto.getPublishedDate() != null)
+            book.setPublishedDate(dto.getPublishedDate());
+        if (dto.getStatus() != null)
+            book.setStatus(dto.getStatus());
 
         if (dto.getIsbn() != null && !dto.getIsbn().equals(book.getIsbn())) {
             if (bookRepository.existsByIsbn(dto.getIsbn())) {
@@ -133,14 +146,16 @@ public class BookService {
         if (dto.getCategoryId() != null &&
                 (book.getCategory() == null || !book.getCategory().getId().equals(dto.getCategoryId()))) {
             Category category = categoryRepository.findById(dto.getCategoryId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục với ID: " + dto.getCategoryId()));
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Không tìm thấy danh mục với ID: " + dto.getCategoryId()));
             book.setCategory(category);
         }
 
         if (dto.getPublisherId() != null &&
                 (book.getPublisher() == null || !book.getPublisher().getId().equals(dto.getPublisherId()))) {
             Publisher publisher = publisherRepository.findById(dto.getPublisherId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhà xuất bản với ID: " + dto.getPublisherId()));
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Không tìm thấy nhà xuất bản với ID: " + dto.getPublisherId()));
             book.setPublisher(publisher);
         }
 
@@ -152,6 +167,7 @@ public class BookService {
             book.setAuthors(authors);
         }
     }
+
     private BookDTO toDTO(Book book) {
         return BookDTO.builder()
                 .id(book.getId())

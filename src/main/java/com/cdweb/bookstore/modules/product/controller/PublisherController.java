@@ -1,6 +1,7 @@
 package com.cdweb.bookstore.modules.product.controller;
 
 import com.cdweb.bookstore.common.ApiResponse;
+import com.cdweb.bookstore.common.PageResponse;
 import com.cdweb.bookstore.modules.product.dto.PublisherDTO;
 import com.cdweb.bookstore.modules.product.model.Publisher;
 import com.cdweb.bookstore.modules.product.service.PublisherService;
@@ -19,14 +20,15 @@ public class PublisherController {
     private final PublisherService publisherService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<PublisherDTO>>> getAll(
+    public ResponseEntity<ApiResponse<PageResponse<PublisherDTO>>> getAll(
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir
     ) {
-        return ApiResponse.ok(publisherService.getAllPublishers(keyword, page, size, sortBy, sortDir));
+        Page<PublisherDTO> publisherPage = publisherService.getAllPublishers(keyword, page, size, sortBy, sortDir)
+        return ApiResponse.ok(PageResponse.from(publisherPage));
     }
 
     @GetMapping("/all")

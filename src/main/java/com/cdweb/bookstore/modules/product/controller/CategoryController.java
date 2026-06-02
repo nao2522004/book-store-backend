@@ -1,6 +1,8 @@
 package com.cdweb.bookstore.modules.product.controller;
 
 import com.cdweb.bookstore.common.ApiResponse;
+import com.cdweb.bookstore.common.PageResponse;
+import com.cdweb.bookstore.modules.product.dto.BookDTO;
 import com.cdweb.bookstore.modules.product.dto.CategoryDTO;
 import com.cdweb.bookstore.modules.product.service.CategoryService;
 import lombok.RequiredArgsConstructor;
@@ -21,28 +23,31 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<CategoryDTO>>> getAll(
+    public ResponseEntity<ApiResponse<PageResponse<CategoryDTO>>> getAll(
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDir
-    ) {
-        return ApiResponse.ok(categoryService.getAllCategories(keyword, page, size, sortBy, sortDir));
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        Page<CategoryDTO> categoriesPage = categoryService.getAllCategories(keyword, page, size, sortBy, sortDir);
+        return ApiResponse.ok(PageResponse.from(categoriesPage));
     }
 
     @GetMapping("/all")
     public ResponseEntity<ApiResponse<List<CategoryDTO>>> getAllWithoutPagination() {
         return ApiResponse.ok(categoryService.getAllCategories());
     }
+
     @PostMapping
     public ResponseEntity<ApiResponse<CategoryDTO>> createCategory(@RequestBody CategoryDTO categoryDTO) {
         return ApiResponse.created(categoryService.createCategory(categoryDTO), "Tạo danh mục thành công");
     }
+
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<CategoryDTO>> getCategoryById(@PathVariable Long id) {
         return ApiResponse.ok(categoryService.getCategoryById(id));
     }
+
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<CategoryDTO>> updateCategory(
             @PathVariable Long id,
