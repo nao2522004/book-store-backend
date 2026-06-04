@@ -9,8 +9,8 @@ public record AddressRequest(
         String fullName,
 
         @NotBlank(message = "Số điện thoại không được để trống")
-        @Pattern(regexp = "^(0[3|5|7|8|9])+([0-9]{8})$",
-                 message = "Số điện thoại không hợp lệ")
+        @Pattern(regexp = "^(0[3|5|7|8|9])+([0-9]{7,8})$",
+                message = "Số điện thoại không hợp lệ (9-10 số, đầu số 03/05/07/08/09)")
         String phone,
 
         @NotBlank(message = "Số nhà, tên đường không được để trống")
@@ -26,5 +26,5 @@ public record AddressRequest(
         String province,
 
         // true = đặt làm địa chỉ mặc định
-        Boolean isDefault
+        boolean isDefault
 ) {}
